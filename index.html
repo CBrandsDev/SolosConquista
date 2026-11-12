@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapeamento de Obras e Solos - Vitória da Conquista (BA)</title>
+  <!-- LEAFLET CSS -->
+  <link rel="stylesheet" href="lib/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container" id="inicio">
+
+    <!-- CABEÇALHO -->
+    <header class="cabecalho">
+      <div class="cabecalho-info">
+        <h1>
+          🗺️ Mapeamento de Obras e Solos
+        </h1>
+        <p>Vitória da Conquista - Bahia | Georreferenciamento, Limites de Atterberg, Granulometria e Compactação</p>
+      </div>
+
+      <div class="cabecalho-acoes">
+        <span id="contador-obras" class="badge-contador">Carregando obras...</span>
+        <a href="editor.html" class="btn-acao-topo btn-config-topo" title="Ir para o painel de adicionar obras e configurar os seletores">
+          ⚙️ Painel de Configurações
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL (GRID 2 COLUNAS) -->
+    <main class="grid-principal">
+
+      <!-- COLUNA DA ESQUERDA: MAPA GOOGLE MAPS E LISTA DE PONTOS -->
+      <section class="card-secao">
+        <h2 class="secao-titulo">
+          📍 Mapa de Obras e Sondagens
+        </h2>
+        <p class="secao-descricao">
+          Clique sobre qualquer marcador no mapa para consultar as coordenadas exatas, localização e ensaios geotécnicos do solo.
+        </p>
+
+        <!-- CONTAINER DO MAPA -->
+        <div class="mapa-conteiner">
+          <div class="mapa-legenda-topo">
+            <div class="mapa-legenda-itens">
+              <span class="legenda-item"><span class="legenda-ponto-salvo"></span> Obra / Terreno Marcado</span>
+            </div>
+            <span>🧭 Vitória da Conquista / BA</span>
+          </div>
+
+          <div id="mapa-obras" class="mapa-real-leaflet"></div>
+        </div>
+
+        <!-- LISTA RÁPIDA DE OBRAS -->
+        <div class="secao-lista-obras">
+          <div class="lista-obras-topo">
+            <span class="lista-obras-titulo">Obras Cadastradas no Mapa:</span>
+            <input type="text" id="input-filtro-obras" class="input-busca-obras" placeholder="🔍 Filtrar obras...">
+          </div>
+          <div id="container-lista-obras" class="container-cards-obras">
+            <!-- Cards gerados dinamicamente via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUNA DA DIREITA: DETALHES DA OBRA SELECIONADA -->
+      <aside class="painel-detalhes">
+
+        <!-- ESTADO VAZIO -->
+        <div id="estado-vazio" class="estado-vazio">
+          <div class="estado-vazio-icone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+          <h3>Nenhuma obra selecionada</h3>
+          <p>Clique em qualquer ponto no mapa ou na lista ao lado para ver o nome da obra, coordenadas, localização e os 3 ensaios de solo.</p>
+        </div>
+
+        <!-- CARD DE DETALHES DA OBRA SELECIONADA -->
+        <div id="card-visualizacao" class="card-detalhes" style="display: none;">
+
+          <header class="detalhe-cabecalho">
+            <div class="obra-titulo-grupo">
+              <span class="obra-badge-tipo">Informações da Obra</span>
+              <h2 id="view-nome-obra" class="obra-nome">Nome da Obra</h2>
+            </div>
+            <button type="button" id="btn-fechar-view" class="btn-fechar" title="Fechar">✕ Fechar</button>
+          </header>
+
+          <div class="view-conteudo">
+
+            <!-- BLOCO DE COORDENADAS E LOCALIZAÇÃO -->
+            <div class="box-info-geografica">
+              <div class="info-linha">
+                <span class="info-rotulo-suave">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                  Coordenadas:
+                </span>
+                <span id="view-coordenadas" class="info-valor-destaque">0.000000, 0.000000</span>
+              </div>
+
+              <div class="info-linha">
+                <span class="info-rotulo-suave">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  Localização:
+                </span>
+                <span id="view-localizacao" style="font-weight: 600; color: #334155; text-align: right;">-</span>
+              </div>
+
+              <div class="info-linha" style="margin-top: 4px; justify-content: flex-end;">
+                <a id="link-externo-google-maps" href="#" target="_blank" rel="noopener noreferrer" class="link-google-maps">
+                  Abrir no Google Maps ↗
+                </a>
+              </div>
+            </div>
+
+            <!-- DESCRIÇÃO DO LOCAL -->
+            <div class="view-secao">
+              <div class="view-rotulo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                Descrição do Local
+              </div>
+              <div id="view-descricao" class="view-texto-descricao">
+                Nenhuma descrição registrada.
+              </div>
+            </div>
+
+            <!-- OS 3 SELETORES GEOTÉCNICOS -->
+            <div class="grid-seletores-resultado">
+
+              <!-- 1. LIMITE DE ATTERBERG -->
+              <div class="seletor-card-resultado">
+                <span class="seletor-titulo-mini">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M10 2v7.31"></path>
+                    <path d="M14 9.3V2"></path>
+                    <path d="M8.5 2h7"></path>
+                    <path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>
+                  </svg>
+                  Limite de Atterberg
+                </span>
+                <span id="view-atterberg" class="seletor-valor-destaque">-</span>
+              </div>
+
+              <!-- 2. GRANULOMETRIA -->
+              <div class="seletor-card-resultado tipo-granulometria">
+                <span class="seletor-titulo-mini">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                  </svg>
+                  Granulometria
+                </span>
+                <span id="view-granulometria" class="seletor-valor-destaque">-</span>
+              </div>
+
+              <!-- 3. COMPACTAÇÃO -->
+              <div class="seletor-card-resultado tipo-compactacao">
+                <span class="seletor-titulo-mini">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  </svg>
+                  Compactação
+                </span>
+                <span id="view-compactacao" class="seletor-valor-destaque">-</span>
+              </div>
+
+            </div>
+
+            <!-- RODAPÉ COM ATALHO DE EDIÇÃO -->
+            <div class="view-rodape">
+              <a href="editor.html" id="link-editar-obra" class="btn-atalho-editar">
+                ✏️ Editar esta Obra no Painel
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+
+      </aside>
+
+    </main>
+
+  </div>
+
+  <!-- SCRIPTS LEAFLET, DADOS E VISUALIZADOR -->
+  <script src="lib/leaflet.js"></script>
+  <script src="dados_solos.js"></script>
+  <script src="viewer.js"></script>
+</body>
+</html>
