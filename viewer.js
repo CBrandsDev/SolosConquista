@@ -44,13 +44,16 @@ async function carregarObras() {
     if (resp.ok) {
       const dados = await resp.json();
       if (dados && dados.conectado) {
-        atualizarStatusNuvem(true, 'Nuvem Conectada');
+        const provedorNome = dados.provider === 'supabase' ? 'Supabase Online' : 'Nuvem Conectada';
+        atualizarStatusNuvem(true, provedorNome);
         if (Array.isArray(dados.pontos) && dados.pontos.length > 0) {
           try {
             localStorage.setItem('conquista_obras_pontos', JSON.stringify(dados.pontos));
           } catch (e) {}
           return dados.pontos;
         }
+      } else if (dados && dados.precisaCriarTabela) {
+        atualizarStatusNuvem(false, 'Criar Tabela SQL');
       } else {
         atualizarStatusNuvem(false, 'Modo Local');
       }

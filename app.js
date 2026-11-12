@@ -84,7 +84,8 @@ async function carregarDados() {
     if (resp.ok) {
       const nuvem = await resp.json();
       if (nuvem && nuvem.conectado) {
-        atualizarStatusNuvem(true, 'Nuvem Conectada');
+        const nomeProvedor = nuvem.provider === 'supabase' ? 'Supabase Online' : 'Nuvem Conectada';
+        atualizarStatusNuvem(true, nomeProvedor);
         if (Array.isArray(nuvem.pontos) && nuvem.pontos.length > 0) {
           obrasLista = nuvem.pontos;
           persistirObrasLocal();
@@ -94,6 +95,8 @@ async function carregarDados() {
           persistirOpcoesLocal();
         }
         if (obrasLista.length > 0) return;
+      } else if (nuvem && nuvem.precisaCriarTabela) {
+        atualizarStatusNuvem(false, 'Criar Tabela SQL (Supabase)');
       } else {
         atualizarStatusNuvem(false, 'Modo Local');
       }
@@ -227,11 +230,15 @@ async function sincronizarTudoComNuvem() {
 
     const res = await resp.json();
     if (res && res.conectado) {
-      atualizarStatusNuvem(true, 'Nuvem Conectada');
-      alert(`✅ Sincronização com a Vercel realizada com sucesso!\n\n${obrasLista.length} obra(s) e as opções dos seletores agora estão gravadas no banco de dados na nuvem.\n\nQualquer pessoa que acessar o link do site verá essas alterações em tempo real!`);
+      const provedorNome = res.provider === 'supabase' ? 'Supabase' : 'Vercel KV';
+      atualizarStatusNuvem(true, `${provedorNome} Online`);
+      alert(`✅ Sincronização realizada com sucesso via ${provedorNome}!\n\n${obrasLista.length} obra(s) e as opções dos seletores agora estão gravadas no banco de dados na nuvem.\n\nQualquer pessoa que acessar o link do site verá essas alterações em tempo real!`);
+    } else if (res && res.precisaCriarTabela) {
+      atualizarStatusNuvem(false, 'Criar Tabela SQL');
+      alert(`⚠️ Supabase conectado, mas a tabela "solos_data" ainda não foi criada no banco.\n\nBasta ir no painel do Supabase > SQL Editor e rodar o script SQL de criação da tabela.`);
     } else {
       atualizarStatusNuvem(false, 'Modo Local');
-      alert(`ℹ️ O banco de dados Vercel KV ainda não foi conectado no painel da Vercel.\n\nPara ativar o salvamento público online:\n1. Acesse vercel.com e entre no projeto SolosConquista\n2. Clique na aba "Storage"\n3. Clique em "Create Database" e selecione "KV"\n4. Conecte ao seu projeto e reimplante!\n\nEnquanto isso, seus dados continuam salvos com segurança no seu navegador.`);
+      alert(`ℹ️ O banco de dados gratuito Supabase ainda não foi conectado no painel da Vercel.\n\nPara ativar o salvamento público online:\n1. Acesse vercel.com e entre no projeto SolosConquista\n2. Clique na aba "Storage" e conecte o "Supabase (Free Plan)"\n\nEnquanto isso, seus dados continuam salvos com segurança no seu navegador.`);
     }
   } catch (err) {
     alert('Erro ao tentar conectar com a API: ' + err.message);
