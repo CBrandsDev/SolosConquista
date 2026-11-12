@@ -94,6 +94,11 @@ async function carregarDados() {
           opcoesSeletores = nuvem.opcoesSeletores;
           persistirOpcoesLocal();
         }
+        if (Array.isArray(nuvem.turmas)) {
+          try {
+            localStorage.setItem('conquista_turmas', JSON.stringify(nuvem.turmas));
+          } catch (e) {}
+        }
         if (obrasLista.length > 0) return;
       } else if (nuvem && nuvem.precisaCriarTabela) {
         atualizarStatusNuvem(false, 'Criar Tabela SQL (Supabase)');
@@ -217,6 +222,16 @@ async function sincronizarTudoComNuvem() {
   btnSincronizarNuvem.disabled = true;
   btnSincronizarNuvem.innerHTML = '⏳ Enviando...';
 
+  // Recupera turmas locais para sincronizar tudo em conjunto
+  let turmasLocais = [];
+  try {
+    const rawT = localStorage.getItem('conquista_turmas');
+    if (rawT) turmasLocais = JSON.parse(rawT);
+  } catch (e) {}
+  if (!turmasLocais.length && window.DADOS_SOLOS_PUBLICOS && Array.isArray(window.DADOS_SOLOS_PUBLICOS.turmas)) {
+    turmasLocais = window.DADOS_SOLOS_PUBLICOS.turmas;
+  }
+
   try {
     const resp = await fetch('/api/solos', {
       method: 'POST',
@@ -224,7 +239,8 @@ async function sincronizarTudoComNuvem() {
       body: JSON.stringify({
         acao: 'sincronizar_tudo',
         pontos: obrasLista,
-        opcoesSeletores: opcoesSeletores
+        opcoesSeletores: opcoesSeletores,
+        turmas: turmasLocais
       })
     });
 
@@ -267,6 +283,105 @@ const alertaSucesso = document.getElementById('alerta-sucesso');
 const btnNovoPonto = document.getElementById('btn-novo-ponto');
 const btnLimparForm = document.getElementById('btn-limpar-formulario');
 
+// Elementos de Upload de Fotos da Obra (2 fotos)
+const campoFoto1 = document.getElementById('campo-foto1');
+const previewFoto1Box = document.getElementById('preview-foto1-box');
+const previewFoto1Img = document.getElementById('preview-foto1-img');
+const btnRemoverFoto1 = document.getElementById('btn-remover-foto1');
+
+const campoFoto2 = document.getElementById('campo-foto2');
+const previewFoto2Box = document.getElementById('preview-foto2-box');
+const previewFoto2Img = document.getElementById('preview-foto2-img');
+const btnRemoverFoto2 = document.getElementById('btn-remover-foto2');
+
+let foto1Base64 = '';
+let foto2Base64 = '';
+
+// Função para comprimir imagem no navegador antes do upload
+function comprimirImagem(file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      return reject(new Error('Arquivo não é uma imagem válida.'));
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Handlers de Upload das Fotos
+if (campoFoto1) {
+  campoFoto1.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      foto1Base64 = await comprimirImagem(file);
+      previewFoto1Img.src = foto1Base64;
+      previewFoto1Box.style.display = 'block';
+    } catch (err) {
+      alert('Erro ao carregar Foto 1: ' + err.message);
+    }
+  });
+}
+
+if (btnRemoverFoto1) {
+  btnRemoverFoto1.addEventListener('click', () => {
+    foto1Base64 = '';
+    if (campoFoto1) campoFoto1.value = '';
+    previewFoto1Img.src = '';
+    previewFoto1Box.style.display = 'none';
+  });
+}
+
+if (campoFoto2) {
+  campoFoto2.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      foto2Base64 = await comprimirImagem(file);
+      previewFoto2Img.src = foto2Base64;
+      previewFoto2Box.style.display = 'block';
+    } catch (err) {
+      alert('Erro ao carregar Foto 2: ' + err.message);
+    }
+  });
+}
+
+if (btnRemoverFoto2) {
+  btnRemoverFoto2.addEventListener('click', () => {
+    foto2Base64 = '';
+    if (campoFoto2) campoFoto2.value = '';
+    previewFoto2Img.src = '';
+    previewFoto2Box.style.display = 'none';
+  });
+}
+
 // Elementos do Gerenciador de Seletores
 const abasBotoes = document.querySelectorAll('.btn-aba-seletor');
 const containerChips = document.getElementById('container-chips-opcoes');
@@ -276,10 +391,6 @@ const btnAddOpcao = document.getElementById('btn-adicionar-opcao');
 // Lista e Filtro no Editor
 const containerListaEditor = document.getElementById('container-lista-obras-editor');
 const inputFiltroEditor = document.getElementById('input-filtro-editor');
-
-// Backup
-const btnExportarBackup = document.getElementById('btn-exportar-backup');
-const inputImportarBackup = document.getElementById('input-importar-backup');
 
 // Inicializa o mapa com estilo Google Maps
 function inicializarMapa() {
@@ -451,6 +562,25 @@ window.carregarObraNoFormulario = function(obraId) {
   seletorGranulometria.value = obra.granulometria || '';
   seletorCompactacao.value = obra.compactacao || '';
 
+  // Carrega as fotos da obra (se existirem)
+  foto1Base64 = obra.foto1 || '';
+  if (foto1Base64 && previewFoto1Box && previewFoto1Img) {
+    previewFoto1Img.src = foto1Base64;
+    previewFoto1Box.style.display = 'block';
+  } else if (previewFoto1Box) {
+    previewFoto1Box.style.display = 'none';
+    if (previewFoto1Img) previewFoto1Img.src = '';
+  }
+
+  foto2Base64 = obra.foto2 || '';
+  if (foto2Base64 && previewFoto2Box && previewFoto2Img) {
+    previewFoto2Img.src = foto2Base64;
+    previewFoto2Box.style.display = 'block';
+  } else if (previewFoto2Box) {
+    previewFoto2Box.style.display = 'none';
+    if (previewFoto2Img) previewFoto2Img.src = '';
+  }
+
   formModoBadge.textContent = 'Editando Obra';
   formModoBadge.style.color = '#0284c7';
   formTitulo.textContent = 'Editar Informações da Obra';
@@ -503,6 +633,17 @@ function limparFormulario() {
   seletorGranulometria.value = '';
   seletorCompactacao.value = '';
 
+  // Limpa campos de fotos
+  foto1Base64 = '';
+  if (campoFoto1) campoFoto1.value = '';
+  if (previewFoto1Box) previewFoto1Box.style.display = 'none';
+  if (previewFoto1Img) previewFoto1Img.src = '';
+
+  foto2Base64 = '';
+  if (campoFoto2) campoFoto2.value = '';
+  if (previewFoto2Box) previewFoto2Box.style.display = 'none';
+  if (previewFoto2Img) previewFoto2Img.src = '';
+
   statusCoordenadas.textContent = 'Clique no mapa';
   statusCoordenadas.style.color = 'var(--solo-azul)';
 
@@ -552,6 +693,8 @@ formObra.addEventListener('submit', (e) => {
     atterberg: seletorAtterberg.value,
     granulometria: seletorGranulometria.value,
     compactacao: seletorCompactacao.value,
+    foto1: foto1Base64 || '',
+    foto2: foto2Base64 || '',
     atualizadoEm: new Date().toISOString()
   };
 
@@ -683,77 +826,6 @@ abasBotoes.forEach(btn => {
     renderizarChipsAbaAtiva();
   });
 });
-
-// ==========================================================================
-// BACKUP E RESTAURAÇÃO
-// ==========================================================================
-
-// Salvar Backup (Gera o arquivo dados_solos.js com obras e opções de seletores)
-if (btnExportarBackup) {
-  btnExportarBackup.addEventListener('click', () => {
-    const payload = {
-      pontos: obrasLista,
-      opcoesSeletores: opcoesSeletores
-    };
-
-    const codigoJs = `// ==========================================================================\n// DADOS DE SOLOS E OBRAS - VITÓRIA DA CONQUISTA (BA)\n// Gerado em: ${new Date().toLocaleString('pt-BR')}\n// Este arquivo é carregado pelo site no Netlify e localmente.\n// ==========================================================================\n\nwindow.DADOS_SOLOS_PUBLICOS = ${JSON.stringify(payload, null, 2)};\n`;
-
-    const blob = new Blob([codigoJs], { type: 'application/javascript;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'dados_solos.js';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    alert(`✅ Backup gerado com sucesso!\n\nArquivo baixado: "dados_solos.js" (${obrasLista.length} obra(s)).\n\nBasta salvá-lo na pasta "siteConquista" e reenviar a pasta para o Netlify para atualizar o site na web!`);
-  });
-}
-
-// Restaurar Backup (Aceita .js ou .json)
-if (inputImportarBackup) {
-  inputImportarBackup.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        let texto = ev.target.result.trim();
-        if (texto.includes('window.DADOS_SOLOS_PUBLICOS')) {
-          const match = texto.match(/window\.DADOS_SOLOS_PUBLICOS\s*=\s*(\{[\s\S]*?\})\s*;/);
-          if (match) texto = match[1];
-        }
-
-        const dados = JSON.parse(texto);
-
-        // Suporta tanto o novo formato ({ pontos, opcoesSeletores }) quanto o formato anterior (array)
-        if (Array.isArray(dados)) {
-          obrasLista = dados;
-        } else if (dados && typeof dados === 'object') {
-          if (Array.isArray(dados.pontos)) obrasLista = dados.pontos;
-          if (dados.opcoesSeletores) opcoesSeletores = dados.opcoesSeletores;
-        }
-
-        persistirObras();
-        persistirOpcoes();
-
-        atualizarDropdownsFormulario();
-        renderizarChipsAbaAtiva();
-        renderizarMarcadoresSalvos();
-        renderizarListaEditor();
-        limparFormulario();
-
-        alert(`✅ Backup restaurado com sucesso! ${obrasLista.length} obra(s) carregada(s).`);
-      } catch (err) {
-        alert('Erro ao processar arquivo de backup: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-  });
-}
 
 // Sincronizar com a Nuvem Vercel
 if (btnSincronizarNuvem) {

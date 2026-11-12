@@ -39,7 +39,8 @@ module.exports = async (req, res) => {
       conectado: false,
       mensagem: 'Nenhum banco de dados conectado. Conecte a integração do Supabase (Free Plan) no painel da Vercel.',
       pontos: [],
-      opcoesSeletores: null
+      opcoesSeletores: null,
+      turmas: []
     });
   }
 
@@ -66,7 +67,8 @@ module.exports = async (req, res) => {
               precisaCriarTabela: true,
               mensagem: 'Supabase conectado! Execute o SQL para criar a tabela "solos_data".',
               pontos: [],
-              opcoesSeletores: null
+              opcoesSeletores: null,
+              turmas: []
             });
           }
           throw new Error(`Erro Supabase (${resp.status}): ${errText}`);
@@ -75,11 +77,13 @@ module.exports = async (req, res) => {
         const rows = await resp.json();
         let pontos = [];
         let opcoesSeletores = null;
+        let turmas = [];
         let atualizadoEm = null;
 
         if (Array.isArray(rows) && rows.length > 0) {
           pontos = rows[0].pontos || [];
           opcoesSeletores = rows[0].opcoes_seletores || null;
+          turmas = rows[0].turmas || [];
           atualizadoEm = rows[0].atualizado_em || null;
         }
 
@@ -89,6 +93,7 @@ module.exports = async (req, res) => {
           sucesso: true,
           pontos: pontos,
           opcoesSeletores: opcoesSeletores,
+          turmas: turmas,
           atualizadoEm: atualizadoEm
         });
       }
@@ -99,10 +104,10 @@ module.exports = async (req, res) => {
           try { payload = JSON.parse(payload); } catch (e) { payload = {}; }
         }
 
-        const { acao, obra, id, opcoesSeletores, pontos } = payload;
+        const { acao, obra, id, opcoesSeletores, pontos, turma, turmas } = payload;
 
         // Obtém estado atual gravado
-        let estadoAtual = { pontos: [], opcoesSeletores: null };
+        let estadoAtual = { pontos: [], opcoesSeletores: null, turmas: [] };
         try {
           const getResp = await fetch(`${supabaseUrl}/rest/v1/solos_data?id=eq.principal&select=*`, {
             headers: {
@@ -115,13 +120,15 @@ module.exports = async (req, res) => {
             if (Array.isArray(rows) && rows.length > 0) {
               if (Array.isArray(rows[0].pontos)) estadoAtual.pontos = rows[0].pontos;
               if (rows[0].opcoes_seletores) estadoAtual.opcoesSeletores = rows[0].opcoes_seletores;
+              if (Array.isArray(rows[0].turmas)) estadoAtual.turmas = rows[0].turmas;
             }
           }
         } catch (e) {}
 
         if (!Array.isArray(estadoAtual.pontos)) estadoAtual.pontos = [];
+        if (!Array.isArray(estadoAtual.turmas)) estadoAtual.turmas = [];
 
-        // Aplica ação
+        // 1. Ações de Obras
         if (acao === 'salvar_obra' && obra) {
           const idx = estadoAtual.pontos.findIndex(o => o.id === obra.id);
           const obraAtualizada = { ...obra, atualizadoEm: new Date().toISOString() };
@@ -132,14 +139,32 @@ module.exports = async (req, res) => {
           }
         } else if (acao === 'excluir_obra' && id) {
           estadoAtual.pontos = estadoAtual.pontos.filter(o => o.id !== id);
-        } else if (acao === 'salvar_opcoes' && opcoesSeletores) {
+        }
+        // 2. Ações de Seletores
+        else if (acao === 'salvar_opcoes' && opcoesSeletores) {
           estadoAtual.opcoesSeletores = opcoesSeletores;
-        } else if (acao === 'sincronizar_tudo') {
+        }
+        // 3. Ações de Turmas
+        else if (acao === 'salvar_turma' && turma) {
+          const idx = estadoAtual.turmas.findIndex(t => t.id === turma.id);
+          const turmaAtualizada = { ...turma, atualizadoEm: new Date().toISOString() };
+          if (idx !== -1) {
+            estadoAtual.turmas[idx] = turmaAtualizada;
+          } else {
+            estadoAtual.turmas.unshift(turmaAtualizada);
+          }
+        } else if (acao === 'excluir_turma' && id) {
+          estadoAtual.turmas = estadoAtual.turmas.filter(t => t.id !== id);
+        }
+        // 4. Sincronização Completa
+        else if (acao === 'sincronizar_tudo') {
           if (Array.isArray(pontos)) estadoAtual.pontos = pontos;
           if (opcoesSeletores) estadoAtual.opcoesSeletores = opcoesSeletores;
+          if (Array.isArray(turmas)) estadoAtual.turmas = turmas;
         } else {
           if (Array.isArray(payload.pontos)) estadoAtual.pontos = payload.pontos;
           if (payload.opcoesSeletores) estadoAtual.opcoesSeletores = payload.opcoesSeletores;
+          if (Array.isArray(payload.turmas)) estadoAtual.turmas = payload.turmas;
         }
 
         estadoAtual.atualizadoEm = new Date().toISOString();
@@ -157,6 +182,7 @@ module.exports = async (req, res) => {
             id: 'principal',
             pontos: estadoAtual.pontos,
             opcoes_seletores: estadoAtual.opcoesSeletores,
+            turmas: estadoAtual.turmas,
             atualizado_em: estadoAtual.atualizadoEm
           }])
         });
@@ -173,6 +199,7 @@ module.exports = async (req, res) => {
           mensagem: 'Dados sincronizados com sucesso no Supabase!',
           pontos: estadoAtual.pontos,
           opcoesSeletores: estadoAtual.opcoesSeletores,
+          turmas: estadoAtual.turmas,
           atualizadoEm: estadoAtual.atualizadoEm
         });
       }
@@ -205,8 +232,8 @@ module.exports = async (req, res) => {
           dados = typeof resJson.result === 'string' ? JSON.parse(resJson.result) : resJson.result;
         } catch (e) {}
       }
-      if (!dados || !Array.isArray(dados.pontos)) {
-        dados = { pontos: [], opcoesSeletores: null };
+      if (!dados || typeof dados !== 'object') {
+        dados = { pontos: [], opcoesSeletores: null, turmas: [] };
       }
       return res.status(200).json({
         conectado: true,
@@ -214,6 +241,7 @@ module.exports = async (req, res) => {
         sucesso: true,
         pontos: dados.pontos || [],
         opcoesSeletores: dados.opcoesSeletores || null,
+        turmas: dados.turmas || [],
         atualizadoEm: dados.atualizadoEm || null
       });
     }
@@ -223,16 +251,17 @@ module.exports = async (req, res) => {
       if (typeof payload === 'string') {
         try { payload = JSON.parse(payload); } catch (e) { payload = {}; }
       }
-      const { acao, obra, id, opcoesSeletores, pontos } = payload;
+      const { acao, obra, id, opcoesSeletores, pontos, turma, turmas } = payload;
 
       const resJson = await executarComandoKV(['GET', DB_KEY]);
-      let estadoAtual = { pontos: [], opcoesSeletores: null };
+      let estadoAtual = { pontos: [], opcoesSeletores: null, turmas: [] };
       if (resJson && resJson.result) {
         try {
           estadoAtual = typeof resJson.result === 'string' ? JSON.parse(resJson.result) : resJson.result;
         } catch (e) {}
       }
       if (!Array.isArray(estadoAtual.pontos)) estadoAtual.pontos = [];
+      if (!Array.isArray(estadoAtual.turmas)) estadoAtual.turmas = [];
 
       if (acao === 'salvar_obra' && obra) {
         const idx = estadoAtual.pontos.findIndex(o => o.id === obra.id);
@@ -246,9 +275,20 @@ module.exports = async (req, res) => {
         estadoAtual.pontos = estadoAtual.pontos.filter(o => o.id !== id);
       } else if (acao === 'salvar_opcoes' && opcoesSeletores) {
         estadoAtual.opcoesSeletores = opcoesSeletores;
+      } else if (acao === 'salvar_turma' && turma) {
+        const idx = estadoAtual.turmas.findIndex(t => t.id === turma.id);
+        const turmaAtualizada = { ...turma, atualizadoEm: new Date().toISOString() };
+        if (idx !== -1) {
+          estadoAtual.turmas[idx] = turmaAtualizada;
+        } else {
+          estadoAtual.turmas.unshift(turmaAtualizada);
+        }
+      } else if (acao === 'excluir_turma' && id) {
+        estadoAtual.turmas = estadoAtual.turmas.filter(t => t.id !== id);
       } else if (acao === 'sincronizar_tudo') {
         if (Array.isArray(pontos)) estadoAtual.pontos = pontos;
         if (opcoesSeletores) estadoAtual.opcoesSeletores = opcoesSeletores;
+        if (Array.isArray(turmas)) estadoAtual.turmas = turmas;
       }
 
       estadoAtual.atualizadoEm = new Date().toISOString();
@@ -261,6 +301,7 @@ module.exports = async (req, res) => {
         mensagem: 'Dados sincronizados com sucesso na nuvem Vercel KV!',
         pontos: estadoAtual.pontos,
         opcoesSeletores: estadoAtual.opcoesSeletores,
+        turmas: estadoAtual.turmas,
         atualizadoEm: estadoAtual.atualizadoEm
       });
     }

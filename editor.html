@@ -23,20 +23,23 @@
 
       <div class="cabecalho-acoes">
         <span id="status-nuvem" class="badge-status-nuvem status-verificando">☁️ Conectando...</span>
-        <button id="btn-sincronizar-nuvem" class="btn-acao-topo btn-nuvem-topo" title="Enviar todos os dados locais para a nuvem da Vercel">
+        <button id="btn-sincronizar-nuvem" class="btn-acao-topo btn-nuvem-topo" title="Enviar todos os dados para a nuvem">
           ☁️ Sincronizar com a Nuvem
         </button>
         <a href="index.html" class="btn-acao-topo btn-destaque-view" title="Voltar para o mapa principal de visualização">
           👁️ Ver Mapa Principal
         </a>
-        <button id="btn-exportar-backup" class="btn-acao-topo btn-config-topo" title="Salvar arquivo de backup com todas as obras e seletores">
-          💾 Salvar Backup
-        </button>
-        <label for="input-importar-backup" class="btn-acao-topo" title="Restaurar dados de um arquivo de backup">
-          📂 Restaurar Backup
-        </label>
-        <input type="file" id="input-importar-backup" class="input-file-oculto" accept=".js,.json">
+        <a href="turmas.html" class="btn-acao-topo btn-turmas-topo" title="Ir para as fotos e registros das turmas">
+          🎓 Fotos das Turmas
+        </a>
       </div>
+
+      <!-- ABAS SUPERIORES -->
+      <nav class="nav-abas-topo">
+        <a href="index.html" class="btn-aba-nav">🗺️ Mapa de Obras</a>
+        <a href="turmas.html" class="btn-aba-nav">🎓 Fotos das Turmas & Ensaios</a>
+        <a href="editor.html" class="btn-aba-nav ativo">⚙️ Adicionar Obra / Configurações</a>
+      </nav>
     </header>
 
     <!-- CONTEÚDO PRINCIPAL (GRID 2 COLUNAS) -->
@@ -194,6 +197,35 @@
               <select id="seletor-compactacao" class="select-customizado">
                 <option value="">-- Selecione uma opção --</option>
               </select>
+            </div>
+
+            <!-- FOTOS DA OBRA / ENSAIO (DOIS CAMPOS) -->
+            <div class="campo-grupo">
+              <label class="campo-label">
+                <span>📷 Foto 1 da Obra / Ensaio</span>
+                <span class="dica-label">Opcional</span>
+              </label>
+              <div class="upload-foto-container">
+                <input type="file" id="campo-foto1" accept="image/*" class="input-file-custom">
+                <div id="preview-foto1-box" class="preview-foto-box" style="display: none;">
+                  <img id="preview-foto1-img" src="" alt="Prévia Foto 1">
+                  <button type="button" id="btn-remover-foto1" class="btn-remover-foto" title="Remover Foto 1">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="campo-grupo">
+              <label class="campo-label">
+                <span>📷 Foto 2 da Obra / Ensaio</span>
+                <span class="dica-label">Opcional</span>
+              </label>
+              <div class="upload-foto-container">
+                <input type="file" id="campo-foto2" accept="image/*" class="input-file-custom">
+                <div id="preview-foto2-box" class="preview-foto-box" style="display: none;">
+                  <img id="preview-foto2-img" src="" alt="Prévia Foto 2">
+                  <button type="button" id="btn-remover-foto2" class="btn-remover-foto" title="Remover Foto 2">✕</button>
+                </div>
+              </div>
             </div>
 
             <!-- BOTÕES DE AÇÃO -->

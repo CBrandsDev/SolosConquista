@@ -50,6 +50,13 @@ async function carregarObras() {
           try {
             localStorage.setItem('conquista_obras_pontos', JSON.stringify(dados.pontos));
           } catch (e) {}
+        }
+        if (Array.isArray(dados.turmas)) {
+          try {
+            localStorage.setItem('conquista_turmas', JSON.stringify(dados.turmas));
+          } catch (e) {}
+        }
+        if (Array.isArray(dados.pontos) && dados.pontos.length > 0) {
           return dados.pontos;
         }
       } else if (dados && dados.precisaCriarTabela) {
@@ -101,6 +108,40 @@ const btnFechar = document.getElementById('btn-fechar-view');
 const contadorObras = document.getElementById('contador-obras');
 const containerListaObras = document.getElementById('container-lista-obras');
 const inputFiltro = document.getElementById('input-filtro-obras');
+
+// Elementos de Fotos e Lightbox
+const viewFotosSecao = document.getElementById('view-fotos-secao');
+const boxViewFoto1 = document.getElementById('box-view-foto1');
+const viewFoto1 = document.getElementById('view-foto1');
+const boxViewFoto2 = document.getElementById('box-view-foto2');
+const viewFoto2 = document.getElementById('view-foto2');
+const modalLightbox = document.getElementById('modal-lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const btnFecharLightbox = document.getElementById('btn-fechar-lightbox');
+
+function abrirLightbox(src) {
+  if (!modalLightbox || !lightboxImg || !src) return;
+  lightboxImg.src = src;
+  modalLightbox.classList.add('visivel');
+}
+
+function fecharLightbox() {
+  if (!modalLightbox) return;
+  modalLightbox.classList.remove('visivel');
+  if (lightboxImg) lightboxImg.src = '';
+}
+
+if (boxViewFoto1) boxViewFoto1.addEventListener('click', () => abrirLightbox(viewFoto1.src));
+if (boxViewFoto2) boxViewFoto2.addEventListener('click', () => abrirLightbox(viewFoto2.src));
+if (btnFecharLightbox) btnFecharLightbox.addEventListener('click', fecharLightbox);
+if (modalLightbox) {
+  modalLightbox.addEventListener('click', (e) => {
+    if (e.target === modalLightbox) fecharLightbox();
+  });
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fecharLightbox();
+});
 
 // Inicializa o mapa com estilo Google Maps
 function inicializarMapa() {
@@ -266,6 +307,28 @@ function exibirObra(obraId) {
   viewAtterberg.textContent = obra.atterberg || 'Não informado';
   viewGranulometria.textContent = obra.granulometria || 'Não informado';
   viewCompactacao.textContent = obra.compactacao || 'Não informado';
+
+  // Fotos da obra / ensaio (abaixo de granulometria e compactação)
+  let temFoto = false;
+  if (obra.foto1 && boxViewFoto1 && viewFoto1) {
+    viewFoto1.src = obra.foto1;
+    boxViewFoto1.style.display = 'block';
+    temFoto = true;
+  } else if (boxViewFoto1) {
+    boxViewFoto1.style.display = 'none';
+  }
+
+  if (obra.foto2 && boxViewFoto2 && viewFoto2) {
+    viewFoto2.src = obra.foto2;
+    boxViewFoto2.style.display = 'block';
+    temFoto = true;
+  } else if (boxViewFoto2) {
+    boxViewFoto2.style.display = 'none';
+  }
+
+  if (viewFotosSecao) {
+    viewFotosSecao.style.display = temFoto ? 'block' : 'none';
+  }
 
   if (linkGoogleMaps) {
     linkGoogleMaps.href = `https://www.google.com/maps?q=${obra.lat},${obra.lng}`;

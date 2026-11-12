@@ -1,8 +1,6 @@
 // ==========================================================================
 // DADOS DE SOLOS E OBRAS - VITÓRIA DA CONQUISTA (BA)
-// Este arquivo é carregado pelo site no Netlify e localmente.
-// Quando você gerar um novo backup no painel de edição, substitua este
-// arquivo na pasta do projeto para atualizar os dados para todos os visitantes.
+// Este arquivo é carregado pelo site como fallback inicial e offline.
 // ==========================================================================
 
 window.DADOS_SOLOS_PUBLICOS = {
@@ -17,6 +15,8 @@ window.DADOS_SOLOS_PUBLICOS = {
       atterberg: "Média Plasticidade (7 ≤ IP ≤ 15)",
       granulometria: "Argila arenosa",
       compactacao: "Ensaio Proctor Normal",
+      foto1: "",
+      foto2: "",
       dataCriacao: "2026-11-12T15:00:00.000Z"
     },
     {
@@ -29,6 +29,8 @@ window.DADOS_SOLOS_PUBLICOS = {
       atterberg: "Baixa Plasticidade (IP < 7)",
       granulometria: "Areia argilosa",
       compactacao: "Grau de Compactação (GC ≥ 95%)",
+      foto1: "",
+      foto2: "",
       dataCriacao: "2026-11-12T15:10:00.000Z"
     }
   ],
@@ -59,5 +61,15 @@ window.DADOS_SOLOS_PUBLICOS = {
       "Grau de Compactação (GC ≥ 98%)",
       "Umidade Ótima Atingida"
     ]
-  }
+  },
+  turmas: [
+    {
+      id: "turma-exemplo-2024-1",
+      semestre: "2024.1",
+      nome: "Turma de Geotecnia e Mecânica dos Solos",
+      descricao: "Coleta de amostras deformadas e indeformadas nos bairros Candeias, Boa Vista e Primavera. Realização de ensaios laboratoriais de Limites de Consistência de Atterberg (LL e LP), ensaios de sedimentação e peneiramento para curva granulométrica, e curvas de compactação Proctor Normal.",
+      fotos: [],
+      dataCriacao: "2026-11-12T15:00:00.000Z"
+    }
+  ]
 };
