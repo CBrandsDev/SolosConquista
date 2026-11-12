@@ -192,6 +192,38 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-salvar-topo {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+  font-weight: 700;
+}
+
+.btn-salvar-topo:hover {
+  background: #15803d;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-cancelar-topo {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+  font-weight: 600;
+}
+
+.btn-cancelar-topo:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.acoes-grupo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .input-file-oculto {
   display: none;
 }
@@ -767,6 +799,20 @@ body {
   font-weight: 600;
   align-items: center;
   gap: 8px;
+}
+
+#toast-notificacao {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 999999;
+  border-radius: 8px;
+  box-shadow: var(--sombra-xl);
+  border: 1px solid #86efac;
+  background: #dcfce7;
+  color: #14532d;
+  font-size: 0.92rem;
+  padding: 12px 20px;
 }
 
 .alerta-sucesso.visivel {

@@ -12,230 +12,506 @@
 
   <div class="container" id="inicio">
 
-    <!-- CABEÇALHO -->
+    <!-- CABEÇALHO COM ESTADOS: VISUALIZAÇÃO E CONFIGURAÇÃO -->
     <header class="cabecalho">
       <div class="cabecalho-info">
         <h1>
           🗺️ Mapeamento de Obras e Solos
         </h1>
-        <p>Vitória da Conquista - Bahia | Georreferenciamento, Limites de Atterberg, Granulometria e Compactação</p>
+        <p>Vitória da Conquista - Bahia | Levantamento Geotécnico, Ensaios de Solo e Registros Acadêmicos</p>
       </div>
 
+      <!-- PARTE DE CIMA: STATUS DO SUPABASE E BOTÕES DE AÇÃO -->
       <div class="cabecalho-acoes">
+        <!-- Status do Banco de Dados / Supabase -->
         <span id="status-nuvem" class="badge-status-nuvem status-verificando">☁️ Conectando...</span>
-        <span id="contador-obras" class="badge-contador">Carregando obras...</span>
-        <a href="turmas.html" class="btn-acao-topo btn-turmas-topo" title="Ver fotos e registros das turmas que fizeram os ensaios">
-          🎓 Fotos das Turmas
-        </a>
-        <a href="editor.html" class="btn-acao-topo btn-config-topo" title="Ir para o painel de adicionar obras e configurar os seletores">
-          ⚙️ Painel de Configurações
-        </a>
+
+        <!-- Botão no Modo Visualização (Apenas Configuração) -->
+        <div id="acoes-modo-visualizacao" class="acoes-grupo">
+          <button type="button" id="btn-entrar-config" class="btn-acao-topo btn-config-topo" title="Entrar no modo de edição e configurações">
+            ⚙️ Configuração
+          </button>
+        </div>
+
+        <!-- Botões no Modo Configuração (Cancelar e Salvar e Voltar) -->
+        <div id="acoes-modo-config" class="acoes-grupo" style="display: none;">
+          <button type="button" id="btn-cancelar-config" class="btn-acao-topo btn-cancelar-topo" title="Cancelar e voltar para a visualização">
+            ✕ Cancelar
+          </button>
+          <button type="button" id="btn-salvar-voltar" class="btn-acao-topo btn-salvar-topo" title="Salvar todas as alterações na nuvem e voltar para o mapa">
+            💾 Salvar e Voltar
+          </button>
+        </div>
       </div>
 
-      <!-- ABAS SUPERIORES -->
-      <nav class="nav-abas-topo">
-        <a href="index.html" class="btn-aba-nav ativo">🗺️ Mapa de Obras</a>
-        <a href="turmas.html" class="btn-aba-nav">🎓 Fotos das Turmas & Ensaios</a>
-        <a href="editor.html" class="btn-aba-nav">⚙️ Adicionar Obra / Configurações</a>
+      <!-- PARTE DE BAIXO: APENAS DOIS BOTÕES DE NAVEGAÇÃO -->
+
+      <!-- 1. Navegação no Modo Visualização: Apenas Mapa e Fotos -->
+      <nav id="nav-visualizacao" class="nav-abas-topo">
+        <button type="button" id="tab-ver-mapa" class="btn-aba-nav ativo">
+          🗺️ Mapa
+        </button>
+        <button type="button" id="tab-ver-fotos" class="btn-aba-nav">
+          📸 Fotos
+        </button>
+      </nav>
+
+      <!-- 2. Navegação no Modo Configuração: Apenas Configurar Mapa e Configurar Fotos -->
+      <nav id="nav-config" class="nav-abas-topo" style="display: none;">
+        <button type="button" id="tab-cfg-mapa" class="btn-aba-nav ativo">
+          📍 Configurar Mapa
+        </button>
+        <button type="button" id="tab-cfg-fotos" class="btn-aba-nav">
+          🎓 Configurar Fotos
+        </button>
       </nav>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL (GRID 2 COLUNAS) -->
-    <main class="grid-principal">
+    <!-- NOTIFICAÇÃO TOAST GLOBAL -->
+    <div id="toast-notificacao" class="alerta-sucesso"></div>
 
-      <!-- COLUNA DA ESQUERDA: MAPA GOOGLE MAPS E LISTA DE PONTOS -->
-      <section class="card-secao">
-        <h2 class="secao-titulo">
-          📍 Mapa de Obras e Sondagens
-        </h2>
-        <p class="secao-descricao">
-          Clique sobre qualquer marcador no mapa para consultar as coordenadas exatas, localização e ensaios geotécnicos do solo.
-        </p>
+    <!-- ======================================================================
+         1. ABA: MAPA (MODO VISUALIZAÇÃO)
+         ====================================================================== -->
+    <section id="secao-ver-mapa" class="secao-app-view">
+      <main class="grid-principal">
+        
+        <!-- COLUNA DA ESQUERDA: MAPA LEAFLET E BUSCA -->
+        <div class="card-secao">
+          <h2 class="secao-titulo">
+            📍 Mapa de Obras e Sondagens
+          </h2>
+          <p class="secao-descricao">
+            Clique em qualquer marcador no mapa para consultar as coordenadas, endereço e os 3 ensaios geotécnicos.
+          </p>
 
-        <!-- CONTAINER DO MAPA -->
-        <div class="mapa-conteiner">
-          <div class="mapa-legenda-topo">
-            <div class="mapa-legenda-itens">
-              <span class="legenda-item"><span class="legenda-ponto-salvo"></span> Obra / Terreno Marcado</span>
+          <div class="mapa-conteiner">
+            <div class="mapa-legenda-topo">
+              <div class="mapa-legenda-itens">
+                <span class="legenda-item"><span class="legenda-ponto-salvo"></span> Obra / Terreno Marcado</span>
+              </div>
+              <span id="contador-obras" class="badge-contador">Carregando...</span>
             </div>
-            <span>🧭 Vitória da Conquista / BA</span>
+
+            <div id="mapa-obras" class="mapa-real-leaflet"></div>
           </div>
 
-          <div id="mapa-obras" class="mapa-real-leaflet"></div>
-        </div>
-
-        <!-- LISTA RÁPIDA DE OBRAS -->
-        <div class="secao-lista-obras">
-          <div class="lista-obras-topo">
-            <span class="lista-obras-titulo">Obras Cadastradas no Mapa:</span>
-            <input type="text" id="input-filtro-obras" class="input-busca-obras" placeholder="🔍 Filtrar obras...">
-          </div>
-          <div id="container-lista-obras" class="container-cards-obras">
-            <!-- Cards gerados dinamicamente via JS -->
+          <!-- LISTA RÁPIDA DE OBRAS -->
+          <div class="secao-lista-obras">
+            <div class="lista-obras-topo">
+              <span class="lista-obras-titulo">Obras Cadastradas:</span>
+              <input type="text" id="input-filtro-obras" class="input-busca-obras" placeholder="🔍 Filtrar obras...">
+            </div>
+            <div id="container-lista-obras" class="container-cards-obras"></div>
           </div>
         </div>
-      </section>
 
-      <!-- COLUNA DA DIREITA: DETALHES DA OBRA SELECIONADA -->
-      <aside class="painel-detalhes">
+        <!-- COLUNA DA DIREITA: DETALHES DA OBRA SELECIONADA -->
+        <aside class="painel-detalhes">
+          <!-- ESTADO VAZIO -->
+          <div id="estado-vazio" class="estado-vazio">
+            <div class="estado-vazio-icone">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <h3>Nenhuma obra selecionada</h3>
+            <p>Clique em qualquer ponto no mapa ou na lista ao lado para ver nome, coordenadas, localização, ensaios e fotos.</p>
+          </div>
 
-        <!-- ESTADO VAZIO -->
-        <div id="estado-vazio" class="estado-vazio">
-          <div class="estado-vazio-icone">
+          <!-- CARD DE DETALHES DA OBRA -->
+          <div id="card-visualizacao" class="card-detalhes" style="display: none;">
+            <header class="detalhe-cabecalho">
+              <div class="obra-titulo-grupo">
+                <span class="obra-badge-tipo">Informações da Obra</span>
+                <h2 id="view-nome-obra" class="obra-nome">Nome da Obra</h2>
+              </div>
+              <button type="button" id="btn-fechar-view" class="btn-fechar" title="Fechar">✕ Fechar</button>
+            </header>
+
+            <div class="view-conteudo">
+              <!-- COORDENADAS E LOCALIZAÇÃO -->
+              <div class="box-info-geografica">
+                <div class="info-linha">
+                  <span class="info-rotulo-suave">Coordenadas:</span>
+                  <span id="view-coordenadas" class="info-valor-destaque">0.000000, 0.000000</span>
+                </div>
+                <div class="info-linha">
+                  <span class="info-rotulo-suave">Localização:</span>
+                  <span id="view-localizacao" style="font-weight: 600; color: #334155; text-align: right;">-</span>
+                </div>
+                <div class="info-linha" style="margin-top: 4px; justify-content: flex-end;">
+                  <a id="link-externo-google-maps" href="#" target="_blank" rel="noopener noreferrer" class="link-google-maps">
+                    Abrir no Google Maps ↗
+                  </a>
+                </div>
+              </div>
+
+              <!-- DESCRIÇÃO -->
+              <div class="view-secao">
+                <div class="view-rotulo">Descrição do Local</div>
+                <div id="view-descricao" class="view-texto-descricao">Nenhuma descrição registrada.</div>
+              </div>
+
+              <!-- OS 3 SELETORES GEOTÉCNICOS -->
+              <div class="grid-seletores-resultado">
+                <!-- 1. ATTERBERG -->
+                <div class="seletor-card-resultado">
+                  <span class="seletor-titulo-mini">Limite de Atterberg</span>
+                  <span id="view-atterberg" class="seletor-valor-destaque">-</span>
+                </div>
+
+                <!-- 2. GRANULOMETRIA -->
+                <div class="seletor-card-resultado tipo-granulometria">
+                  <span class="seletor-titulo-mini">Granulometria</span>
+                  <span id="view-granulometria" class="seletor-valor-destaque">-</span>
+                </div>
+
+                <!-- 3. COMPACTAÇÃO -->
+                <div class="seletor-card-resultado tipo-compactacao">
+                  <span class="seletor-titulo-mini">Compactação</span>
+                  <span id="view-compactacao" class="seletor-valor-destaque">-</span>
+                </div>
+              </div>
+
+              <!-- FOTOS DA OBRA (ABAIXO DE GRANULOMETRIA E COMPACTAÇÃO) -->
+              <div id="view-fotos-secao" class="view-fotos-obras" style="display: none;">
+                <div class="view-rotulo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                  Fotos do Terreno / Ensaios
+                </div>
+                <div class="grid-fotos-visualizacao">
+                  <div id="box-view-foto1" class="card-foto-view" style="display: none;" title="Clique para ampliar">
+                    <img id="view-foto1" src="" alt="Foto 1 da Obra">
+                    <span class="badge-foto-tag">Foto 1</span>
+                  </div>
+                  <div id="box-view-foto2" class="card-foto-view" style="display: none;" title="Clique para ampliar">
+                    <img id="view-foto2" src="" alt="Foto 2 da Obra">
+                    <span class="badge-foto-tag">Foto 2</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BOTÃO DE ATALHO PARA EDITAR -->
+              <div class="view-rodape">
+                <button type="button" id="btn-atalho-editar-obra" class="btn-atalho-editar">
+                  ✏️ Editar esta Obra no Painel
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </section>
+
+    <!-- ======================================================================
+         2. ABA: FOTOS DAS TURMAS (MODO VISUALIZAÇÃO PÚBLICA)
+         ====================================================================== -->
+    <section id="secao-ver-fotos" class="secao-app-view" style="display: none;">
+      <div class="card-secao">
+        <div class="turmas-topo-bar">
+          <div>
+            <h2 class="secao-titulo" style="font-size: 1.35rem;">
+              📸 Registros Fotográficos das Turmas
+            </h2>
+            <p class="secao-descricao">
+              Acompanhe as turmas de Engenharia e Geotecnia que realizaram ensaios laboratoriais e investigações de solo em Vitória da Conquista.
+            </p>
+          </div>
+
+          <input 
+            type="text" 
+            id="input-filtro-turmas-view" 
+            class="input-busca-obras" 
+            style="max-width: 320px;" 
+            placeholder="🔍 Filtrar por semestre ou atividade..."
+          >
+        </div>
+
+        <!-- GRID DE CARDS PÚBLICOS DE TURMAS -->
+        <div id="container-turmas-publicas" class="grid-turmas-cards"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         3. ABA: CONFIGURAR MAPA (MODO CONFIGURAÇÃO)
+         ====================================================================== -->
+    <section id="secao-cfg-mapa" class="secao-app-view" style="display: none;">
+      <main class="grid-principal">
+        
+        <!-- COLUNA DA ESQUERDA: MAPA INTERATIVO PARA MARCAR PONTOS -->
+        <div class="card-secao">
+          <div class="banner-dica">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
-          </div>
-          <h3>Nenhuma obra selecionada</h3>
-          <p>Clique em qualquer ponto no mapa ou na lista ao lado para ver o nome da obra, coordenadas, localização e os 3 ensaios de solo.</p>
-        </div>
-
-        <!-- CARD DE DETALHES DA OBRA SELECIONADA -->
-        <div id="card-visualizacao" class="card-detalhes" style="display: none;">
-
-          <header class="detalhe-cabecalho">
-            <div class="obra-titulo-grupo">
-              <span class="obra-badge-tipo">Informações da Obra</span>
-              <h2 id="view-nome-obra" class="obra-nome">Nome da Obra</h2>
+            <div>
+              <strong>Como adicionar um terreno:</strong> Clique em qualquer ponto no mapa. As coordenadas serão capturadas e o endereço será preenchido automaticamente!
             </div>
-            <button type="button" id="btn-fechar-view" class="btn-fechar" title="Fechar">✕ Fechar</button>
-          </header>
-
-          <div class="view-conteudo">
-
-            <!-- BLOCO DE COORDENADAS E LOCALIZAÇÃO -->
-            <div class="box-info-geografica">
-              <div class="info-linha">
-                <span class="info-rotulo-suave">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                  </svg>
-                  Coordenadas:
-                </span>
-                <span id="view-coordenadas" class="info-valor-destaque">0.000000, 0.000000</span>
-              </div>
-
-              <div class="info-linha">
-                <span class="info-rotulo-suave">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                  </svg>
-                  Localização:
-                </span>
-                <span id="view-localizacao" style="font-weight: 600; color: #334155; text-align: right;">-</span>
-              </div>
-
-              <div class="info-linha" style="margin-top: 4px; justify-content: flex-end;">
-                <a id="link-externo-google-maps" href="#" target="_blank" rel="noopener noreferrer" class="link-google-maps">
-                  Abrir no Google Maps ↗
-                </a>
-              </div>
-            </div>
-
-            <!-- DESCRIÇÃO DO LOCAL -->
-            <div class="view-secao">
-              <div class="view-rotulo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                Descrição do Local
-              </div>
-              <div id="view-descricao" class="view-texto-descricao">
-                Nenhuma descrição registrada.
-              </div>
-            </div>
-
-            <!-- OS 3 SELETORES GEOTÉCNICOS -->
-            <div class="grid-seletores-resultado">
-
-              <!-- 1. LIMITE DE ATTERBERG -->
-              <div class="seletor-card-resultado">
-                <span class="seletor-titulo-mini">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                    <path d="M10 2v7.31"></path>
-                    <path d="M14 9.3V2"></path>
-                    <path d="M8.5 2h7"></path>
-                    <path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>
-                  </svg>
-                  Limite de Atterberg
-                </span>
-                <span id="view-atterberg" class="seletor-valor-destaque">-</span>
-              </div>
-
-              <!-- 2. GRANULOMETRIA -->
-              <div class="seletor-card-resultado tipo-granulometria">
-                <span class="seletor-titulo-mini">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                    <polyline points="2 17 12 22 22 17"></polyline>
-                    <polyline points="2 12 12 17 22 12"></polyline>
-                  </svg>
-                  Granulometria
-                </span>
-                <span id="view-granulometria" class="seletor-valor-destaque">-</span>
-              </div>
-
-              <!-- 3. COMPACTAÇÃO -->
-              <div class="seletor-card-resultado tipo-compactacao">
-                <span class="seletor-titulo-mini">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                  </svg>
-                  Compactação
-                </span>
-                <span id="view-compactacao" class="seletor-valor-destaque">-</span>
-              </div>
-
-            </div>
-
-            <!-- FOTOS DA OBRA / ENSAIO (ABAIXO DE GRANULOMETRIA E COMPACTAÇÃO) -->
-            <div id="view-fotos-secao" class="view-fotos-obras" style="display: none;">
-              <div class="view-rotulo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                Fotos do Terreno / Ensaios
-              </div>
-              <div class="grid-fotos-visualizacao">
-                <div id="box-view-foto1" class="card-foto-view" style="display: none;" title="Clique para ampliar">
-                  <img id="view-foto1" src="" alt="Foto 1 da Obra">
-                  <span class="badge-foto-tag">Foto 1</span>
-                </div>
-                <div id="box-view-foto2" class="card-foto-view" style="display: none;" title="Clique para ampliar">
-                  <img id="view-foto2" src="" alt="Foto 2 da Obra">
-                  <span class="badge-foto-tag">Foto 2</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- RODAPÉ COM ATALHO DE EDIÇÃO -->
-            <div class="view-rodape">
-              <a href="editor.html" id="link-editar-obra" class="btn-atalho-editar">
-                ✏️ Editar esta Obra no Painel
-              </a>
-            </div>
-
           </div>
 
+          <div class="mapa-conteiner">
+            <div class="mapa-legenda-topo">
+              <div class="mapa-legenda-itens">
+                <span class="legenda-item"><span class="legenda-ponto-novo"></span> Ponto Selecionado</span>
+                <span class="legenda-item"><span class="legenda-ponto-salvo"></span> Obra Salva</span>
+              </div>
+              <span>🧭 Vitória da Conquista / BA</span>
+            </div>
+
+            <div id="mapa-editor" class="mapa-real-leaflet"></div>
+          </div>
+
+          <!-- LISTA DE OBRAS DO EDITOR -->
+          <div class="secao-lista-obras">
+            <div class="lista-obras-topo">
+              <span class="lista-obras-titulo">Obras no Banco:</span>
+              <input type="text" id="input-filtro-editor" class="input-busca-obras" placeholder="🔍 Filtrar obras...">
+            </div>
+            <div id="container-lista-obras-editor" class="container-cards-obras"></div>
+          </div>
         </div>
 
-      </aside>
+        <!-- COLUNA DA DIREITA: FORMULÁRIO DA OBRA + SELETORES -->
+        <aside class="painel-detalhes">
+          
+          <!-- FORMULÁRIO DE OBRA -->
+          <div class="card-detalhes">
+            <header class="detalhe-cabecalho">
+              <div class="obra-titulo-grupo">
+                <span id="form-modo-badge" class="obra-badge-tipo">Novo Ponto</span>
+                <h2 id="form-titulo" class="obra-nome">Informações da Obra</h2>
+              </div>
+              <button type="button" id="btn-novo-ponto" class="btn-fechar" title="Iniciar novo ponto">＋ Novo</button>
+            </header>
 
-    </main>
+            <form id="form-obra" class="form-conteudo">
+              <input type="hidden" id="campo-id-edicao">
+              <input type="hidden" id="campo-lat">
+              <input type="hidden" id="campo-lng">
+
+              <!-- NOME -->
+              <div class="campo-grupo">
+                <label for="campo-nome" class="campo-label">
+                  <span>Nome da Obra / Terreno</span>
+                  <span class="dica-label">Obrigatório</span>
+                </label>
+                <input type="text" id="campo-nome" class="input-texto" placeholder="Ex: Residencial Jardins, Loteamento Morada..." required autocomplete="off">
+              </div>
+
+              <!-- COORDENADAS -->
+              <div class="campo-grupo">
+                <label for="campo-coordenadas" class="campo-label">
+                  <span>Coordenadas (Lat, Lng)</span>
+                  <span id="status-coordenadas" class="dica-label" style="color: var(--solo-azul); font-weight: 600;">Clique no mapa</span>
+                </label>
+                <input type="text" id="campo-coordenadas" class="input-texto" placeholder="Clique no mapa para capturar..." readonly style="background: #f1f5f9; font-family: monospace; font-weight: 700;">
+              </div>
+
+              <!-- LOCALIZAÇÃO -->
+              <div class="campo-grupo">
+                <label for="campo-localizacao" class="campo-label">
+                  <span>Localização / Endereço</span>
+                  <span class="dica-label">Bairro / Rua</span>
+                </label>
+                <input type="text" id="campo-localizacao" class="input-texto" placeholder="Ex: Av. Olívia Flores, Bairro Candeias" autocomplete="off">
+              </div>
+
+              <!-- DESCRIÇÃO -->
+              <div class="campo-grupo">
+                <label for="campo-descricao" class="campo-label">
+                  <span>Descrição do Local</span>
+                </label>
+                <textarea id="campo-descricao" class="textarea-customizado" placeholder="Descreva observações da sondagem, profundidade, relevo..."></textarea>
+              </div>
+
+              <!-- SELETOR 1: ATTERBERG -->
+              <div class="campo-grupo">
+                <label for="seletor-atterberg" class="campo-label">
+                  <span>Limite de Atterberg</span>
+                </label>
+                <select id="seletor-atterberg" class="select-customizado">
+                  <option value="">-- Selecione uma opção --</option>
+                </select>
+              </div>
+
+              <!-- SELETOR 2: GRANULOMETRIA -->
+              <div class="campo-grupo">
+                <label for="seletor-granulometria" class="campo-label">
+                  <span>Granulometria</span>
+                </label>
+                <select id="seletor-granulometria" class="select-customizado">
+                  <option value="">-- Selecione uma opção --</option>
+                </select>
+              </div>
+
+              <!-- SELETOR 3: COMPACTAÇÃO -->
+              <div class="campo-grupo">
+                <label for="seletor-compactacao" class="campo-label">
+                  <span>Compactação</span>
+                </label>
+                <select id="seletor-compactacao" class="select-customizado">
+                  <option value="">-- Selecione uma opção --</option>
+                </select>
+              </div>
+
+              <!-- DOIS CAMPOS DE FOTO (ABAIXO DE GRANULOMETRIA E COMPACTAÇÃO) -->
+              <div class="campo-grupo">
+                <label class="campo-label">
+                  <span>📷 Foto 1 da Obra / Ensaio</span>
+                  <span class="dica-label">Opcional</span>
+                </label>
+                <div class="upload-foto-container">
+                  <input type="file" id="campo-foto1" accept="image/*" class="input-file-custom">
+                  <div id="preview-foto1-box" class="preview-foto-box" style="display: none;">
+                    <img id="preview-foto1-img" src="" alt="Prévia Foto 1">
+                    <button type="button" id="btn-remover-foto1" class="btn-remover-foto" title="Remover Foto 1">✕</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="campo-grupo">
+                <label class="campo-label">
+                  <span>📷 Foto 2 da Obra / Ensaio</span>
+                  <span class="dica-label">Opcional</span>
+                </label>
+                <div class="upload-foto-container">
+                  <input type="file" id="campo-foto2" accept="image/*" class="input-file-custom">
+                  <div id="preview-foto2-box" class="preview-foto-box" style="display: none;">
+                    <img id="preview-foto2-img" src="" alt="Prévia Foto 2">
+                    <button type="button" id="btn-remover-foto2" class="btn-remover-foto" title="Remover Foto 2">✕</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- BOTÕES DO FORMULÁRIO -->
+              <div class="form-acoes">
+                <button type="submit" id="btn-salvar-obra" class="btn-salvar">
+                  💾 Salvar Obra no Mapa
+                </button>
+                <button type="button" id="btn-limpar-formulario" class="btn-cancelar">
+                  ✕ Limpar
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- GERENCIADOR DE OPÇÕES DOS 3 SELETORES -->
+          <div class="card-config-seletores">
+            <h3 class="secao-titulo" style="font-size: 1.05rem;">
+              ⚙️ Opções dos 3 Seletores
+            </h3>
+            <p class="secao-descricao" style="margin-bottom: 12px;">
+              Adicione ou remova opções disponíveis nos seletores.
+            </p>
+
+            <div class="abas-seletores">
+              <button type="button" class="btn-aba-seletor ativo" data-seletor="atterberg">Atterberg</button>
+              <button type="button" class="btn-aba-seletor" data-seletor="granulometria">Granulometria</button>
+              <button type="button" class="btn-aba-seletor" data-seletor="compactacao">Compactação</button>
+            </div>
+
+            <div id="container-chips-opcoes" class="lista-chips-opcoes"></div>
+
+            <div class="form-adicionar-opcao">
+              <input type="text" id="input-nova-opcao" class="input-nova-opcao" placeholder="Nova opção...">
+              <button type="button" id="btn-adicionar-opcao" class="btn-add-opcao">＋ Adicionar</button>
+            </div>
+          </div>
+
+        </aside>
+      </main>
+    </section>
+
+    <!-- ======================================================================
+         4. ABA: CONFIGURAR FOTOS (MODO CONFIGURAÇÃO)
+         ====================================================================== -->
+    <section id="secao-cfg-fotos" class="secao-app-view" style="display: none;">
+      <!-- FORMULÁRIO DE TURMA -->
+      <div class="card-secao" style="margin-bottom: 24px; border-left: 6px solid #0f766e;">
+        <div class="detalhe-cabecalho" style="margin-bottom: 16px;">
+          <div class="obra-titulo-grupo">
+            <span id="badge-modo-turma" class="obra-badge-tipo" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">Nova Turma</span>
+            <h2 id="titulo-form-turma" class="obra-nome" style="font-size: 1.3rem;">Cadastrar / Editar Registro da Turma</h2>
+          </div>
+          <button type="button" id="btn-limpar-form-turma" class="btn-fechar" title="Limpar formulário">＋ Nova</button>
+        </div>
+
+        <form id="form-turma-cfg" class="form-conteudo">
+          <input type="hidden" id="turma-cfg-id-edicao">
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+            <div class="campo-grupo">
+              <label for="turma-campo-semestre" class="campo-label">
+                <span>Semestre da Turma</span>
+                <span class="dica-label">Obrigatório (Ex: 2024.2)</span>
+              </label>
+              <input type="text" id="turma-campo-semestre" class="input-texto" placeholder="Ex: 2024.2" required autocomplete="off">
+            </div>
+
+            <div class="campo-grupo">
+              <label for="turma-campo-nome" class="campo-label">
+                <span>Identificação / Nome da Turma</span>
+                <span class="dica-label">Opcional</span>
+              </label>
+              <input type="text" id="turma-campo-nome" class="input-texto" placeholder="Ex: Turma de Geotecnia e Mecânica dos Solos II" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="turma-campo-descricao" class="campo-label">
+              <span>Descrição do que fizeram nos Ensaios</span>
+              <span class="dica-label">Obrigatório</span>
+            </label>
+            <textarea id="turma-campo-descricao" class="textarea-customizado" rows="4" placeholder="Descreva detalhadamente o que a turma realizou: ensaios de Atterberg, peneiramento, compactação Proctor, coletas nos bairros..." required></textarea>
+          </div>
+
+          <div class="campo-grupo">
+            <label class="campo-label">
+              <span>📷 Fotos da Turma e dos Ensaios</span>
+              <span class="dica-label">Selecione várias fotos</span>
+            </label>
+            <input type="file" id="turma-input-fotos" accept="image/*" multiple class="input-file-custom">
+            <div id="turma-container-previews" class="turma-galeria" style="margin-top: 10px;"></div>
+          </div>
+
+          <div class="form-acoes" style="margin-top: 16px;">
+            <button type="submit" id="btn-salvar-turma-cfg" class="btn-salvar" style="background: #0f766e; border-color: #0f766e;">
+              💾 Salvar Registro da Turma
+            </button>
+            <button type="button" id="btn-cancelar-turma-cfg" class="btn-cancelar">
+              ✕ Limpar Formulário
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- LISTA DE TURMAS COM AÇÕES DE EDITAR/EXCLUIR -->
+      <div class="card-secao">
+        <div class="turmas-topo-bar">
+          <div>
+            <h2 class="secao-titulo" style="font-size: 1.25rem;">
+              Gerenciar Turmas Cadastradas
+            </h2>
+            <p class="secao-descricao">
+              Edite as fotos e descrições ou remova turmas cadastradas.
+            </p>
+          </div>
+          <input type="text" id="input-filtro-turmas-cfg" class="input-busca-obras" style="max-width: 320px;" placeholder="🔍 Filtrar turmas...">
+        </div>
+        <div id="container-turmas-config" class="grid-turmas-cards"></div>
+      </div>
+    </section>
 
   </div>
 
-  <!-- MODAL LIGHTBOX PARA AMPLIAR FOTOS -->
+  <!-- MODAL LIGHTBOX PARA AMPLIAR FOTOS EM TELA CHEIA -->
   <div id="modal-lightbox" class="modal-lightbox">
     <div class="lightbox-conteiner">
       <button type="button" id="btn-fechar-lightbox" class="btn-fechar-lightbox" title="Fechar">✕</button>
@@ -243,9 +519,9 @@
     </div>
   </div>
 
-  <!-- SCRIPTS LEAFLET, DADOS E VISUALIZADOR -->
+  <!-- SCRIPTS LEAFLET, DADOS E APLICAÇÃO UNIFICADA -->
   <script src="lib/leaflet.js"></script>
   <script src="dados_solos.js"></script>
-  <script src="viewer.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
