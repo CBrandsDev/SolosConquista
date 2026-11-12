@@ -66,9 +66,45 @@ function criarIcone(tipo = 'salvo') {
   });
 }
 
-// Carrega os dados do localStorage ou do arquivo dados_solos.js
-function carregarDados() {
-  // 1. Obras
+// Elementos de status e sincronização da nuvem
+const statusNuvem = document.getElementById('status-nuvem');
+const btnSincronizarNuvem = document.getElementById('btn-sincronizar-nuvem');
+
+function atualizarStatusNuvem(online, texto) {
+  if (!statusNuvem) return;
+  statusNuvem.className = `badge-status-nuvem ${online ? 'status-online' : 'status-local'}`;
+  statusNuvem.innerHTML = online ? `🟢 ${texto}` : `🟡 ${texto}`;
+}
+
+// Carrega os dados da Nuvem Vercel (com fallback para localStorage e dados_solos.js)
+async function carregarDados() {
+  // 1. Tenta buscar da nuvem (Vercel KV)
+  try {
+    const resp = await fetch('/api/solos');
+    if (resp.ok) {
+      const nuvem = await resp.json();
+      if (nuvem && nuvem.conectado) {
+        atualizarStatusNuvem(true, 'Nuvem Conectada');
+        if (Array.isArray(nuvem.pontos) && nuvem.pontos.length > 0) {
+          obrasLista = nuvem.pontos;
+          persistirObrasLocal();
+        }
+        if (nuvem.opcoesSeletores && typeof nuvem.opcoesSeletores === 'object') {
+          opcoesSeletores = nuvem.opcoesSeletores;
+          persistirOpcoesLocal();
+        }
+        if (obrasLista.length > 0) return;
+      } else {
+        atualizarStatusNuvem(false, 'Modo Local');
+      }
+    } else {
+      atualizarStatusNuvem(false, 'Modo Local');
+    }
+  } catch (err) {
+    atualizarStatusNuvem(false, 'Modo Local');
+  }
+
+  // 2. Fallback para localStorage
   try {
     const rawObras = localStorage.getItem('conquista_obras_pontos');
     if (rawObras) obrasLista = JSON.parse(rawObras);
@@ -84,7 +120,7 @@ function carregarDados() {
     }
   }
 
-  // 2. Opções dos 3 Seletores
+  // Opções dos 3 Seletores locais
   try {
     const rawOpcoes = localStorage.getItem('conquista_opcoes_seletores');
     if (rawOpcoes) opcoesSeletores = JSON.parse(rawOpcoes);
@@ -102,12 +138,107 @@ function carregarDados() {
 }
 
 // Salva dados no localStorage
+function persistirObrasLocal() {
+  try {
+    localStorage.setItem('conquista_obras_pontos', JSON.stringify(obrasLista));
+  } catch (e) {}
+}
+
+function persistirOpcoesLocal() {
+  try {
+    localStorage.setItem('conquista_opcoes_seletores', JSON.stringify(opcoesSeletores));
+  } catch (e) {}
+}
+
 function persistirObras() {
-  localStorage.setItem('conquista_obras_pontos', JSON.stringify(obrasLista));
+  persistirObrasLocal();
 }
 
 function persistirOpcoes() {
-  localStorage.setItem('conquista_opcoes_seletores', JSON.stringify(opcoesSeletores));
+  persistirOpcoesLocal();
+}
+
+// Sincronização assíncrona com Vercel KV
+async function salvarObraNuvem(dadosObra) {
+  try {
+    const resp = await fetch('/api/solos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'salvar_obra', obra: dadosObra })
+    });
+    const res = await resp.json();
+    if (res && res.conectado) {
+      atualizarStatusNuvem(true, 'Nuvem Conectada');
+      exibirAlerta(`✓ Obra "${dadosObra.nome}" salva na nuvem para todos!`);
+    }
+  } catch (err) {
+    console.warn('Erro ao salvar obra na nuvem:', err);
+  }
+}
+
+async function excluirObraNuvem(obraId) {
+  try {
+    const resp = await fetch('/api/solos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'excluir_obra', id: obraId })
+    });
+    const res = await resp.json();
+    if (res && res.conectado) {
+      atualizarStatusNuvem(true, 'Nuvem Conectada');
+    }
+  } catch (err) {
+    console.warn('Erro ao remover obra da nuvem:', err);
+  }
+}
+
+async function salvarOpcoesNuvem() {
+  try {
+    const resp = await fetch('/api/solos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'salvar_opcoes', opcoesSeletores })
+    });
+    const res = await resp.json();
+    if (res && res.conectado) {
+      atualizarStatusNuvem(true, 'Nuvem Conectada');
+    }
+  } catch (err) {
+    console.warn('Erro ao salvar opções na nuvem:', err);
+  }
+}
+
+async function sincronizarTudoComNuvem() {
+  if (!btnSincronizarNuvem) return;
+  const textoOriginal = btnSincronizarNuvem.innerHTML;
+  btnSincronizarNuvem.disabled = true;
+  btnSincronizarNuvem.innerHTML = '⏳ Enviando...';
+
+  try {
+    const resp = await fetch('/api/solos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        acao: 'sincronizar_tudo',
+        pontos: obrasLista,
+        opcoesSeletores: opcoesSeletores
+      })
+    });
+
+    const res = await resp.json();
+    if (res && res.conectado) {
+      atualizarStatusNuvem(true, 'Nuvem Conectada');
+      alert(`✅ Sincronização com a Vercel realizada com sucesso!\n\n${obrasLista.length} obra(s) e as opções dos seletores agora estão gravadas no banco de dados na nuvem.\n\nQualquer pessoa que acessar o link do site verá essas alterações em tempo real!`);
+    } else {
+      atualizarStatusNuvem(false, 'Modo Local');
+      alert(`ℹ️ O banco de dados Vercel KV ainda não foi conectado no painel da Vercel.\n\nPara ativar o salvamento público online:\n1. Acesse vercel.com e entre no projeto SolosConquista\n2. Clique na aba "Storage"\n3. Clique em "Create Database" e selecione "KV"\n4. Conecte ao seu projeto e reimplante!\n\nEnquanto isso, seus dados continuam salvos com segurança no seu navegador.`);
+    }
+  } catch (err) {
+    alert('Erro ao tentar conectar com a API: ' + err.message);
+  } finally {
+    btnSincronizarNuvem.disabled = false;
+    btnSincronizarNuvem.innerHTML = textoOriginal;
+  }
 }
 
 // Elementos do Formulário
@@ -348,6 +479,7 @@ window.excluirObra = function(obraId) {
     renderizarListaEditor();
 
     exibirAlerta(`Obra "${obra.nome}" removida.`);
+    excluirObraNuvem(obraId);
   }
 };
 
@@ -431,8 +563,9 @@ formObra.addEventListener('submit', (e) => {
   renderizarMarcadoresSalvos();
   renderizarListaEditor();
 
-  exibirAlerta(`✓ Obra "${dadosObra.nome}" salva com sucesso!`);
+  exibirAlerta(`✓ Obra "${dadosObra.nome}" salva! Sincronizando com a nuvem...`);
   limparFormulario();
+  salvarObraNuvem(dadosObra);
 });
 
 // Feedback visual
@@ -496,6 +629,7 @@ window.removerOpcaoSeletor = function(seletorKey, index) {
   persistirOpcoes();
   renderizarChipsAbaAtiva();
   atualizarDropdownsFormulario();
+  salvarOpcoesNuvem();
 };
 
 // Adiciona uma nova opção no seletor ativo
@@ -517,6 +651,7 @@ function adicionarNovaOpcao() {
   inputNovaOpcao.value = '';
   renderizarChipsAbaAtiva();
   atualizarDropdownsFormulario();
+  salvarOpcoesNuvem();
 }
 
 if (btnAddOpcao) {
@@ -613,6 +748,11 @@ if (inputImportarBackup) {
   });
 }
 
+// Sincronizar com a Nuvem Vercel
+if (btnSincronizarNuvem) {
+  btnSincronizarNuvem.addEventListener('click', sincronizarTudoComNuvem);
+}
+
 // Filtro na lista de obras do editor
 if (inputFiltroEditor) {
   inputFiltroEditor.addEventListener('input', (e) => {
@@ -623,8 +763,8 @@ if (inputFiltroEditor) {
 // ==========================================================================
 // INICIALIZAÇÃO
 // ==========================================================================
-document.addEventListener('DOMContentLoaded', () => {
-  carregarDados();
+document.addEventListener('DOMContentLoaded', async () => {
+  await carregarDados();
   inicializarMapa();
   atualizarDropdownsFormulario();
   renderizarChipsAbaAtiva();

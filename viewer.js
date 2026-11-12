@@ -27,8 +27,41 @@ function criarIconeMarcador(ativo = false) {
   });
 }
 
-// Carrega as obras do localStorage ou do arquivo dados_solos.js
-function carregarObras() {
+// Elemento de status da nuvem
+const statusNuvem = document.getElementById('status-nuvem');
+
+function atualizarStatusNuvem(online, texto) {
+  if (!statusNuvem) return;
+  statusNuvem.className = `badge-status-nuvem ${online ? 'status-online' : 'status-local'}`;
+  statusNuvem.innerHTML = online ? `🟢 ${texto}` : `🟡 ${texto}`;
+}
+
+// Carrega as obras da Nuvem Vercel (com fallback para localStorage e dados_solos.js)
+async function carregarObras() {
+  // 1. Tenta buscar da nuvem (Vercel KV)
+  try {
+    const resp = await fetch('/api/solos');
+    if (resp.ok) {
+      const dados = await resp.json();
+      if (dados && dados.conectado) {
+        atualizarStatusNuvem(true, 'Nuvem Conectada');
+        if (Array.isArray(dados.pontos) && dados.pontos.length > 0) {
+          try {
+            localStorage.setItem('conquista_obras_pontos', JSON.stringify(dados.pontos));
+          } catch (e) {}
+          return dados.pontos;
+        }
+      } else {
+        atualizarStatusNuvem(false, 'Modo Local');
+      }
+    } else {
+      atualizarStatusNuvem(false, 'Modo Local');
+    }
+  } catch (err) {
+    atualizarStatusNuvem(false, 'Modo Local');
+  }
+
+  // 2. Fallback para localStorage
   let locais = null;
   try {
     const raw = localStorage.getItem('conquista_obras_pontos');
@@ -41,7 +74,7 @@ function carregarObras() {
     return locais;
   }
 
-  // Fallback para os dados pré-configurados do dados_solos.js
+  // 3. Fallback para os dados pré-configurados do dados_solos.js
   if (window.DADOS_SOLOS_PUBLICOS && Array.isArray(window.DADOS_SOLOS_PUBLICOS.pontos)) {
     return window.DADOS_SOLOS_PUBLICOS.pontos;
   }
@@ -272,9 +305,9 @@ if (inputFiltro) {
 }
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   inicializarMapa();
-  obrasLista = carregarObras();
+  obrasLista = await carregarObras();
 
   if (contadorObras) {
     contadorObras.textContent = `${obrasLista.length} obra(s) mapeada(s)`;
