@@ -154,45 +154,72 @@
                 <div id="view-descricao" class="view-texto-descricao">Nenhuma descrição registrada.</div>
               </div>
 
-              <!-- OS 3 SELETORES GEOTÉCNICOS -->
-              <div class="grid-seletores-resultado">
+              <!-- OS 3 SELETORES GEOTÉCNICOS COM SEUS RESPECTIVOS GRÁFICOS DIRETAMENTE ABAIXO -->
+              <div class="lista-ensaios-detalhes">
                 <!-- 1. ATTERBERG -->
-                <div class="seletor-card-resultado">
-                  <span class="seletor-titulo-mini">Limite de Atterberg</span>
-                  <span id="view-atterberg" class="seletor-valor-destaque">-</span>
-                </div>
-
-                <!-- 2. GRANULOMETRIA -->
-                <div class="seletor-card-resultado tipo-granulometria">
-                  <span class="seletor-titulo-mini">Granulometria</span>
-                  <span id="view-granulometria" class="seletor-valor-destaque">-</span>
-                </div>
-
-                <!-- 3. COMPACTAÇÃO -->
-                <div class="seletor-card-resultado tipo-compactacao">
-                  <span class="seletor-titulo-mini">Compactação</span>
-                  <span id="view-compactacao" class="seletor-valor-destaque">-</span>
-                </div>
-              </div>
-
-              <!-- FOTOS DA OBRA (ABAIXO DE GRANULOMETRIA E COMPACTAÇÃO) -->
-              <div id="view-fotos-secao" class="view-fotos-obras" style="display: none;">
-                <div class="view-rotulo">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                  </svg>
-                  Fotos do Terreno / Ensaios
-                </div>
-                <div class="grid-fotos-visualizacao">
-                  <div id="box-view-foto1" class="card-foto-view" style="display: none;" title="Clique para ampliar">
-                    <img id="view-foto1" src="" alt="Foto 1 da Obra">
-                    <span class="badge-foto-tag">Foto 1</span>
+                <div class="ensaio-bloco">
+                  <div class="seletor-card-resultado">
+                    <span class="seletor-titulo-mini">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M10 2v7.31"></path>
+                        <path d="M14 9.3V2"></path>
+                        <path d="M8.5 2h7"></path>
+                        <path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>
+                      </svg>
+                      Limite de Atterberg
+                    </span>
+                    <span id="view-atterberg" class="seletor-valor-destaque">-</span>
                   </div>
-                  <div id="box-view-foto2" class="card-foto-view" style="display: none;" title="Clique para ampliar">
-                    <img id="view-foto2" src="" alt="Foto 2 da Obra">
-                    <span class="badge-foto-tag">Foto 2</span>
+                </div>
+
+                <!-- 2. GRANULOMETRIA (E GRÁFICO GRANULOMÉTRICO EXATAMENTE EM BAIXO) -->
+                <div class="ensaio-bloco">
+                  <div class="seletor-card-resultado tipo-granulometria">
+                    <span class="seletor-titulo-mini">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                      </svg>
+                      Granulometria
+                    </span>
+                    <span id="view-granulometria" class="seletor-valor-destaque">-</span>
+                  </div>
+
+                  <!-- GRÁFICO GRANULOMÉTRICO -->
+                  <div id="box-view-foto1" class="box-grafico-anexo" style="display: none;" title="Clique para ampliar o Gráfico Granulométrico">
+                    <div class="grafico-anexo-cabecalho">
+                      <span>📈 Gráfico da Curva Granulométrica</span>
+                      <span class="badge-ampliar-mini">🔍 Clique para ampliar</span>
+                    </div>
+                    <div class="grafico-anexo-preview">
+                      <img id="view-foto1" src="" alt="Gráfico da Curva Granulométrica">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. COMPACTAÇÃO (E GRÁFICO DE COMPACTAÇÃO EXATAMENTE EM BAIXO) -->
+                <div class="ensaio-bloco">
+                  <div class="seletor-card-resultado tipo-compactacao">
+                    <span class="seletor-titulo-mini">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      </svg>
+                      Compactação
+                    </span>
+                    <span id="view-compactacao" class="seletor-valor-destaque">-</span>
+                  </div>
+
+                  <!-- GRÁFICO DE COMPACTAÇÃO -->
+                  <div id="box-view-foto2" class="box-grafico-anexo" style="display: none;" title="Clique para ampliar o Gráfico de Compactação">
+                    <div class="grafico-anexo-cabecalho">
+                      <span>📊 Gráfico de Compactação (Curva Proctor)</span>
+                      <span class="badge-ampliar-mini">🔍 Clique para ampliar</span>
+                    </div>
+                    <div class="grafico-anexo-preview">
+                      <img id="view-foto2" src="" alt="Gráfico de Compactação">
+                    </div>
                   </div>
                 </div>
               </div>
@@ -341,51 +368,58 @@
                 </select>
               </div>
 
-              <!-- SELETOR 2: GRANULOMETRIA -->
-              <div class="campo-grupo">
-                <label for="seletor-granulometria" class="campo-label">
-                  <span>Granulometria</span>
-                </label>
-                <select id="seletor-granulometria" class="select-customizado">
-                  <option value="">-- Selecione uma opção --</option>
-                </select>
-              </div>
+              <!-- SELETOR 2: GRANULOMETRIA (COM UPLOAD DO GRÁFICO GRANULOMÉTRICO EXATAMENTE EM BAIXO) -->
+              <div class="bloco-campo-com-anexo">
+                <div class="campo-grupo" style="margin-bottom: 8px;">
+                  <label for="seletor-granulometria" class="campo-label">
+                    <span>Granulometria</span>
+                    <span class="dica-label">Classificação textural</span>
+                  </label>
+                  <select id="seletor-granulometria" class="select-customizado">
+                    <option value="">-- Selecione uma opção --</option>
+                  </select>
+                </div>
 
-              <!-- SELETOR 3: COMPACTAÇÃO -->
-              <div class="campo-grupo">
-                <label for="seletor-compactacao" class="campo-label">
-                  <span>Compactação</span>
-                </label>
-                <select id="seletor-compactacao" class="select-customizado">
-                  <option value="">-- Selecione uma opção --</option>
-                </select>
-              </div>
-
-              <!-- DOIS CAMPOS DE FOTO (ABAIXO DE GRANULOMETRIA E COMPACTAÇÃO) -->
-              <div class="campo-grupo">
-                <label class="campo-label">
-                  <span>📷 Foto 1 da Obra / Ensaio</span>
-                  <span class="dica-label">Opcional</span>
-                </label>
-                <div class="upload-foto-container">
-                  <input type="file" id="campo-foto1" accept="image/*" class="input-file-custom">
-                  <div id="preview-foto1-box" class="preview-foto-box" style="display: none;">
-                    <img id="preview-foto1-img" src="" alt="Prévia Foto 1">
-                    <button type="button" id="btn-remover-foto1" class="btn-remover-foto" title="Remover Foto 1">✕</button>
+                <!-- CAMPO DO GRÁFICO GRANULOMÉTRICO -->
+                <div class="campo-grupo anexo-grafico-grupo">
+                  <label class="campo-label">
+                    <span>📈 Gráfico da Curva Granulométrica</span>
+                    <span class="dica-label">Anexar gráfico (opcional)</span>
+                  </label>
+                  <div class="upload-foto-container">
+                    <input type="file" id="campo-foto1" accept="image/*" class="input-file-custom">
+                    <div id="preview-foto1-box" class="preview-foto-box" style="display: none;">
+                      <img id="preview-foto1-img" src="" alt="Prévia do Gráfico Granulométrico">
+                      <button type="button" id="btn-remover-foto1" class="btn-remover-foto" title="Remover Gráfico Granulométrico">✕</button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div class="campo-grupo">
-                <label class="campo-label">
-                  <span>📷 Foto 2 da Obra / Ensaio</span>
-                  <span class="dica-label">Opcional</span>
-                </label>
-                <div class="upload-foto-container">
-                  <input type="file" id="campo-foto2" accept="image/*" class="input-file-custom">
-                  <div id="preview-foto2-box" class="preview-foto-box" style="display: none;">
-                    <img id="preview-foto2-img" src="" alt="Prévia Foto 2">
-                    <button type="button" id="btn-remover-foto2" class="btn-remover-foto" title="Remover Foto 2">✕</button>
+              <!-- SELETOR 3: COMPACTAÇÃO (COM UPLOAD DO GRÁFICO DE COMPACTAÇÃO EXATAMENTE EM BAIXO) -->
+              <div class="bloco-campo-com-anexo">
+                <div class="campo-grupo" style="margin-bottom: 8px;">
+                  <label for="seletor-compactacao" class="campo-label">
+                    <span>Compactação</span>
+                    <span class="dica-label">Ensaio / Grau atingido</span>
+                  </label>
+                  <select id="seletor-compactacao" class="select-customizado">
+                    <option value="">-- Selecione uma opção --</option>
+                  </select>
+                </div>
+
+                <!-- CAMPO DO GRÁFICO DE COMPACTAÇÃO -->
+                <div class="campo-grupo anexo-grafico-grupo">
+                  <label class="campo-label">
+                    <span>📊 Gráfico de Compactação (Curva Proctor)</span>
+                    <span class="dica-label">Anexar gráfico (opcional)</span>
+                  </label>
+                  <div class="upload-foto-container">
+                    <input type="file" id="campo-foto2" accept="image/*" class="input-file-custom">
+                    <div id="preview-foto2-box" class="preview-foto-box" style="display: none;">
+                      <img id="preview-foto2-img" src="" alt="Prévia do Gráfico de Compactação">
+                      <button type="button" id="btn-remover-foto2" class="btn-remover-foto" title="Remover Gráfico de Compactação">✕</button>
+                    </div>
                   </div>
                 </div>
               </div>
